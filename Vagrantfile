@@ -16,6 +16,7 @@ Vagrant.configure(2) do |config|
       vb.cpus = 2
     end
 
+    server.vm.provision "shell", :path => "provision.sh"
   end
 
   config.vm.define "web" do |server|
