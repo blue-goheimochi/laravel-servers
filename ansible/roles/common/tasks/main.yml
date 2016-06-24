@@ -1,0 +1,46 @@
+- name: install epel repository
+  yum: name=epel-release state=latest
+
+- name: disable services
+  service: name={{ item }} state=stopped enabled=no
+  with_items:
+    - blk-availability
+    - irqbalance
+    - kdump
+    - lvm2-monitor
+
+- name: upgrade all packages
+  yum: name=* state=latest
+
+- name: install yum-cron
+  yum: name=yum-cron state=latest
+
+- name: set yum-cron apply_updates
+  replace: >
+    dest=/etc/yum/yum-cron.conf
+    regexp='^apply_updates = no'
+    replace='apply_updates = yes'
+
+- name: yum-cron start and enable
+  service: name=yum-cron state=started enabled=yes
+
+- name: disable selinux
+  selinux: policy=targeted state=permissive
+
+- name: install nkf
+  yum: name=nkf state=latest
+
+- name: get current timezone
+  shell: timedatectl status | grep 'Time zone:' | sed -n -e "s/^\s*Time zone:\s*\(.*\) \\((.*)\\)/\1/p"
+  register: current_timezone
+  changed_when: false
+
+- name: set timezone
+  shell: timedatectl set-timezone "{{ timezone }}"
+  when: current_timezone.stdout != "{{ timezone }}"
+
+- name: install git
+  yum: name=git state=latest
+
+- name: install unzip
+  yum: name=unzip state=latest
