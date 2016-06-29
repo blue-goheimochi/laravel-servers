@@ -1,0 +1,31 @@
+- name: install chrony
+  yum: name=chrony state=latest
+
+- name: disable servers
+  replace: >
+    dest=/etc/chrony.conf
+    regexp='^(server \d+.centos.pool.ntp.org iburst)'
+    replace='# \1'
+
+- name: add servers
+  blockinfile:
+    dest: /etc/chrony.conf
+    state: present
+    content: |
+
+      # ntp servers
+      server ntp.jst.mfeed.ad.jp iburst
+      server ntp.nict.jp iburst
+
+- name: add allow ntp client
+  lineinfile: >
+    dest=/etc/chrony.conf
+    insertafter="#allow 192.168/16"
+    line="allow 192.168.1.0/24"
+
+- name: chrony start and enable
+  service: name=chronyd state=started enabled=yes
+
+- name: adjust the time
+  shell: chronyc -a makestep
+  changed_when: false
